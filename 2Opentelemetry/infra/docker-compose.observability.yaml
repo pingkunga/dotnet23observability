@@ -1,0 +1,50 @@
+version: "3.9"
+
+include:
+  - compose.collector.yaml
+  - compose.tracing.yaml
+
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./config-files/prometheus.yaml:/etc/prometheus/prometheus.yml
+    command: 
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.listen-address=:8080'
+    ports:
+      - "8080:8080"
+    environment:
+      - config.file=/etc/prometheus/prometheus.yml
+    networks:
+      - practical-otel-net  
+
+  loki:
+    image: grafana/loki:latest
+    command: [ "-config.file=/etc/loki/local-config.yaml" ]
+    networks:
+      - practical-otel-net  
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config-files/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    depends_on:
+      - jaeger
+      - zipkin
+      - prometheus
+      - loki
+      - collector
+    networks:
+      - practical-otel-net  
+
+networks:
+  practical-otel-net:
+    name: practical-otel-net
