@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-
+using testOpenTelemetry.Util;
 namespace testOpenTelemetry.Controllers;
 
 [ApiController]
@@ -12,10 +12,11 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> _logger;
-
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    private readonly WeatherInstrumentation _instrumentation;
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, WeatherInstrumentation instrumentation)
     {
         _logger = logger;
+        _instrumentation = instrumentation;
         _logger.LogInformation("WeatherForecast controller called ");
     }
 
@@ -24,12 +25,18 @@ public class WeatherForecastController : ControllerBase
     {
         _logger.LogInformation("WeatherForecast get method Starting.");
 
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        var foecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
         })
         .ToArray();
+
+        
+        // Optional: Count the freezing days
+        _instrumentation.FreezingDaysCount (foecast.Count(f => f.TemperatureC < 0));
+        _instrumentation.WeatherCallCount();
+        return foecast;
     }
 }

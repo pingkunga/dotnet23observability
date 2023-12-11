@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +15,7 @@ using System.Diagnostics.Metrics;
 namespace testOpenTelemetry.Util;
 public static class ObservabilityRegistration
 {
+    public static ActivitySource ActivitySource = null;
     public static WebApplicationBuilder AddObservability(this WebApplicationBuilder builder)
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -29,6 +31,8 @@ public static class ObservabilityRegistration
         configuration
             .GetRequiredSection(nameof(ObservabilityOptions))
             .Bind(observabilityOptions);
+        
+        ActivitySource = new ActivitySource(observabilityOptions.ServiceName);
 
         builder.Host.AddSerilog();
 
@@ -72,13 +76,24 @@ public static class ObservabilityRegistration
     {
         builder.WithMetrics(metrics =>
         {
-            var meter = new Meter(observabilityOptions.ServiceName);
+            //var meter = new Meter(observabilityOptions.ServiceName);
 
             metrics
-                .AddMeter(meter.Name)
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(meter.Name))
+                .AddMeter(observabilityOptions.ServiceName)
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(observabilityOptions.ServiceName))
                 .AddAspNetCoreInstrumentation();
 
+                /*
+                //AddAspNetCoreInstrumentation = กลุ่มข้างล่าง
+                //Internal ASPNETCORE METER
+                .AddMeter("Microsoft.AspNetCore.Hosting")
+                .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+                .AddMeter("Microsoft.AspNetCore.Http.Connections")
+                .AddMeter("Microsoft.AspNetCore.Routing")
+                .AddMeter("Microsoft.AspNetCore.Diagnostics")
+                .AddMeter("Microsoft.AspNetCore.RateLimiting");
+                */
+                
             metrics
                 .AddOtlpExporter(options =>
                 {
@@ -129,7 +144,8 @@ public static class ObservabilityRegistration
                     cfg.ResourceAttributes = new Dictionary<string, object>
                                                 {
                                                     {"service.name", observabilityOptions.ServiceName},
-                                                    {"index", 10},
+                                                    {"service.version", typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown"},
+                                                    {"service.InstanceId", Environment.MachineName },
                                                     {"flag", true},
                                                     {"value", 3.14}
                                                 };
