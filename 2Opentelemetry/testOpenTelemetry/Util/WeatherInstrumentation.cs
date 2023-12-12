@@ -11,7 +11,7 @@ public class WeatherInstrumentation
     //internal const string MeterName = "Examples.AspNetCore";
     
      //Books meters
-    private  Counter<int> FreezingDaysCounter { get; }
+    public  Counter<int> FreezingDaysCounter { get; }
     private Counter<int> WeattherCallCounter { get; }
     public WeatherInstrumentation(IMeterFactory meterFactory, IConfiguration configuration)
     {

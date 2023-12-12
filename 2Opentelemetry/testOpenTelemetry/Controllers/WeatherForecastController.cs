@@ -1,3 +1,4 @@
+using Grpc.Net.Client.Balancer;
 using Microsoft.AspNetCore.Mvc;
 using testOpenTelemetry.Util;
 namespace testOpenTelemetry.Controllers;
@@ -37,6 +38,12 @@ public class WeatherForecastController : ControllerBase
         // Optional: Count the freezing days
         _instrumentation.FreezingDaysCount (foecast.Count(f => f.TemperatureC < 0));
         _instrumentation.WeatherCallCount();
+        DoSomeThing();
         return foecast;
+    }
+
+    private void DoSomeThing()
+    {
+        _logger.LogInformation("WeatherForecast DoSomeThing");
     }
 }
