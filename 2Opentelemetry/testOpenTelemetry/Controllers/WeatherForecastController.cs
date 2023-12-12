@@ -48,6 +48,9 @@ public class WeatherForecastController : ControllerBase
 
     private void DoSomeThing()
     {
-        _logger.LogInformation("WeatherForecast DoSomeThing");
+        using var activity = ObservabilityRegistration.ActivitySource.StartActivity("WeatherForecastController.DoSomeThing");
+        {
+            _logger.LogInformation("WeatherForecast DoSomeThing");
+        }
     }
 }
