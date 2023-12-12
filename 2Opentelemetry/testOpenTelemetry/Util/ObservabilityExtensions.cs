@@ -58,7 +58,13 @@ public static class ObservabilityRegistration
                     //PING ASPNETCORE GRPC SUPPORT
                     //options.EnableGrpcAspNetCoreSupport = true;
                     options.RecordException = true;
-                });
+                })
+                .AddHttpClientInstrumentation();
+                
+                //https://www.nuget.org/packages/Npgsql.OpenTelemetry#readme-body-tab
+                // This activates up Npgsql's tracing:
+                //.AddNpgsql()
+
            
             tracing
                 .AddOtlpExporter(options =>

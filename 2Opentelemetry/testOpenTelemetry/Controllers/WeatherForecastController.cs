@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Grpc.Net.Client.Balancer;
 using Microsoft.AspNetCore.Mvc;
 using testOpenTelemetry.Util;
@@ -24,22 +25,25 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
-        _logger.LogInformation("WeatherForecast get method Starting.");
-
-        var foecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        using var activity = ObservabilityRegistration.ActivitySource.StartActivity("WeatherForecastController.Get");
         {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-        })
-        .ToArray();
+            _logger.LogInformation("WeatherForecast get method Starting.");
 
-        
-        // Optional: Count the freezing days
-        _instrumentation.FreezingDaysCount (foecast.Count(f => f.TemperatureC < 0));
-        _instrumentation.WeatherCallCount();
-        DoSomeThing();
-        return foecast;
+            var foecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            {
+                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            })
+            .ToArray();
+
+            
+            // Optional: Count the freezing days
+            _instrumentation.FreezingDaysCount (foecast.Count(f => f.TemperatureC < 0));
+            _instrumentation.WeatherCallCount();
+            DoSomeThing();
+            return foecast;
+        }
     }
 
     private void DoSomeThing()
